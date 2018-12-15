@@ -18,4 +18,4 @@ def draw_fr_map(dframe, color, markersize):
 
 
 df = get_df_data("communes.geojson")
-draw_fr_map(df, 'gray', 1.5)
+draw_fr_map(df, 'blue', 1.5)
