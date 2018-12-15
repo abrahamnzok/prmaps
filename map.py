@@ -1,10 +1,30 @@
+import itertools
 import geopandas as gpd
 import pandas as pd
 from pydash import _
 import matplotlib.pyplot as plt
 
 
-def item_aply_pfx_oil_or_oc(colt_oc_item, colt_oil_item, comn_item):
+def is_none(*items):
+    """Cette fonction determine si les items sont de types None
+                Parameters
+                ----------
+                items : args
+                    Une liste d'arguments
+                Returns
+                -------
+                bool
+                    True si au moins un item est de type None
+                """
+    i = 0
+    for item in items:
+        is_instance = isinstance(None, type(item))
+        if is_instance:
+            i += 1
+    return i > 0 and True or False
+
+
+def item_aply_pfx_oil_or_oc(colt_oc_item: object, colt_oil_item: object, comn_item: object) -> object:
     """Cette fonction compare un prefixe oc et oil avec un nom de commune
         Parameters
         ----------
@@ -19,11 +39,18 @@ def item_aply_pfx_oil_or_oc(colt_oc_item, colt_oil_item, comn_item):
         int
             une valeur compris dans cette intervalle [-1, 1]
         """
-    return _.starts_with(_.lower_case(comn_item), colt_oc_item) and 1 or _.starts_with(_.lower_case(comn_item),
-                                                                                       colt_oil_item) and -1 or 0
+    if is_none(colt_oil_item, colt_oc_item):
+        return 0
+    elif is_none(colt_oc_item):
+        return _.starts_with(_.lower_case(comn_item), colt_oil_item) and -1 or 0
+    elif is_none(colt_oil_item):
+        return _.starts_with(_.lower_case(comn_item), colt_oc_item) and 1 or 0
+    else:
+        return _.starts_with(_.lower_case(comn_item), colt_oc_item) and 1 or _.starts_with(_.lower_case(comn_item),
+                                                                                           colt_oil_item) and -1 or 0
 
 
-def item_aply_sfx_oil_or_oc(colt_oc_item, colt_oil_item, comn_item):
+def item_aply_sfx_oil_or_oc(colt_oc_item: object, colt_oil_item: object, comn_item: object) -> object:
     """Cette fonction compare un suffixe oc et oil avec un nom de commune
             Parameters
             ----------
@@ -38,8 +65,48 @@ def item_aply_sfx_oil_or_oc(colt_oc_item, colt_oil_item, comn_item):
             int
                 une valeur compris dans cette intervalle [-1, 1]
             """
-    return _.ends_with(_.lower_case(comn_item), colt_oc_item) and 1 or _.ends_with(_.lower_case(comn_item),
-                                                                                   colt_oil_item) and -1 or 0
+    if is_none(colt_oil_item, colt_oc_item):
+        return 0
+    elif is_none(colt_oc_item):
+        return _.ends_with(_.lower_case(comn_item), colt_oil_item) and -1 or 0
+    elif is_none(colt_oil_item):
+        return _.ends_with(_.lower_case(comn_item), colt_oc_item) and 1 or 0
+    else:
+        return _.ends_with(_.lower_case(comn_item), colt_oc_item) and 1 or _.ends_with(_.lower_case(comn_item),
+                                                                                       colt_oil_item) and -1 or 0
+
+
+def ling_rl_value(oc_clt, oil_clt, comn_name):
+    """Cette fonction renvoie la valeur de la variable linguistique
+                Parameters
+                ----------
+                oc_clt : list
+                    la collection des règles oc
+                oil_clt: list
+                    la collection des règles oi
+                comn_name: str
+                    Le nom de commune à traiter
+                Returns
+                -------
+                int
+                    une valeur compris dans cette intervalle [-1, 1]
+                """
+    vld_rle = 0
+    i = 0
+    for oc_pfx_item, oc_sfx_item, oil_pfx_item, oil_sfx_item in itertools.zip_longest(oc_clt.prefixe,
+                                                                                      oc_clt.suffixe,
+                                                                                      oil_clt.prefixe,
+                                                                                      oil_clt.suffixe):
+        pfx_rle = item_aply_pfx_oil_or_oc(oc_pfx_item, oil_pfx_item, comn_name)
+        sfx_rle = item_aply_sfx_oil_or_oc(oc_sfx_item, oil_sfx_item, comn_name)
+        ling_rle = pfx_rle != 0 and pfx_rle or sfx_rle != 0 and sfx_rle or 0
+        if ling_rle == -1:
+            vld_rle = ling_rle
+        elif ling_rle == 1:
+            vld_rle = ling_rle
+        i = i + 1
+
+    return vld_rle
 
 
 def is_oc(ling_rule):
@@ -120,6 +187,8 @@ def get_rules(jsonfile):
 rules = get_rules("prm2_rules.json")
 
 # print(df.ix[0].head())
-# print(item_aply_sfx_oil_or_oc("ac", "franche", "Plazac"))
-# rules = get_rules("prm2_rules.json")
-# draw_fr_map(df, 'blue', 1.5)
+
+print(ling_rl_value(rules.oc, rules.oil, "Villeneuve"))
+print(ling_rl_value(rules.oc, rules.oil, "Villefort"))
+print(ling_rl_value(rules.oc, rules.oil, "Rougemont"))
+print(ling_rl_value(rules.oc, rules.oil, " Blanc-Mont"))
