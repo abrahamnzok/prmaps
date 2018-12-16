@@ -3,6 +3,10 @@ import geopandas as gpd
 import pandas as pd
 from pydash import _
 import matplotlib.pyplot as plt
+from shapely.geometry import Point
+
+oc_points = []
+oil_points = []
 
 
 def is_none(*items):
@@ -113,7 +117,7 @@ def is_oc(ling_rule):
     """Cette fonction determine par rapport à la valeur de la variable linguistique si une commune est oc ou non
             Parameters
             ----------
-            ling_rule: str
+            ling_rule: int
                 La valeur de la règle linguistique
             Returns
             -------
@@ -127,7 +131,7 @@ def is_oil(ling_rule):
     """Cette fonction determine par rapport à la valeur de la variable linguistique si une commune est oil ou non
              Parameters
              ----------
-             ling_rule: str
+             ling_rule: int
                  La valeur de la règle linguistique
              Returns
              -------
@@ -135,6 +139,19 @@ def is_oil(ling_rule):
                  true si oil false sinon
              """
     return ling_rule == -1
+
+
+def crt_oc_oil_pts(df_rproj_clt, rules_clt, df_cmnes):
+    i = 0
+    for nom in df_cmnes:
+        ling_var = ling_rl_value(rules_clt.oc, rules_clt.oil, nom)
+        if is_oc(ling_var):
+            global oc_points
+            oc_points.append(df_rproj_clt.ix[i])
+        elif is_oil(ling_var):
+            global oil_points
+            oil_points.append(df_rproj_clt.ix[i])
+        i += 1
 
 
 def get_dframe(geojsonfile):
@@ -152,18 +169,28 @@ def get_dframe(geojsonfile):
     return dframe
 
 
-def draw_fr_map(dframe, color, markersize):
+def geojson_reprojected(csvpath):
+    gdf = pd.read_csv(csvpath)
+    return gdf
+
+
+def draw_fr_map(dframe):
     """Cette fonction dessine une carte en fonction du dataframe fournit
              Parameters
              ----------
              dframe: DataFrame
                  Le data frame en question
-             color: str
-                 La couleur de fond de la carte
-             markersize: int
-                Le taille des contours par défaut mettre 1.5
              """
-    dframe.plot(figsize=(10, 10), color=color, markersize=markersize, alpha=0.5, edgecolor='w')
+    fig, ax = plt.subplots(1, figsize=(10, 10))
+    base = dframe.plot(ax=ax, color='b', alpha=0.5)
+    rules = get_rules('prm2_rules.json')
+    crt_oc_oil_pts(geojson_reprojected('communes.csv'), rules, dframe.nom)
+    print(oc_points)
+    geo_banks = gpd.GeoDataFrame({"geometry": oc_points})
+    geo_banks.crs = {'init': 'epsg:4326'}
+    geo_banks.plot(ax=base, marker="o",
+                   mfc="yellow", markersize=5,
+                   markeredgecolor="black", alpha=0.5)
     plt.show()
 
 
@@ -182,13 +209,13 @@ def get_rules(jsonfile):
     return ctrules
 
 
-# df = get_dframe("communes.geojson")
+df = get_dframe("communes.geojson")
+draw_fr_map(df)
 # print(df.nom)
-rules = get_rules("prm2_rules.json")
-
+# rules = get_rules("prm2_rules.json")
+# crt_oc_oil_pts(geojson_reprojected('communes.csv'), rules, df.nom)
 # print(df.ix[0].head())
-
-print(ling_rl_value(rules.oc, rules.oil, "Villeneuve"))
-print(ling_rl_value(rules.oc, rules.oil, "Villefort"))
-print(ling_rl_value(rules.oc, rules.oil, "Rougemont"))
-print(ling_rl_value(rules.oc, rules.oil, " Blanc-Mont"))
+# print(is_oil(ling_rl_value(rules.oc, rules.oil, "Villeneuve")))
+# print(ling_rl_value(rules.oc, rules.oil, "Villefort"))
+# print(ling_rl_value(rules.oc, rules.oil, "Rougemont"))
+# print(ling_rl_value(rules.oc, rules.oil, " Blanc-Mont"))
