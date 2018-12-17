@@ -153,6 +153,11 @@ def crt_oc_oil_pts(df_rproj_clt, rules_clt, df_cmnes):
             oil_points.append(df_rproj_clt.ix[i])
         i += 1
 
+    global oc_df
+    global oil_df
+    oc_df = pd.DataFrame.from_records(oc_points, columns=['X', 'Y', 'code', 'nom'])
+    oil_df = pd.DataFrame.from_records(oil_points, columns=['X', 'Y', 'code', 'nom'])
+
 
 def get_dframe(geojsonfile):
     """Cette fonction lit une fichier de format .geojson et retourne un data frame
@@ -181,16 +186,22 @@ def draw_fr_map(dframe):
              dframe: DataFrame
                  Le data frame en question
              """
-    fig, ax = plt.subplots(1, figsize=(10, 10))
-    base = dframe.plot(ax=ax, color='b', alpha=0.5)
+    fig, ax = plt.subplots(1, figsize=(30, 30))
+    dframe.plot(ax=ax, color='#FDFFFC', alpha=0.5, edgecolor='#0E0F19')
     rules = get_rules('prm2_rules.json')
     crt_oc_oil_pts(geojson_reprojected('communes.csv'), rules, dframe.nom)
-    print(oc_points)
-    geo_banks = gpd.GeoDataFrame({"geometry": oc_points})
-    geo_banks.crs = {'init': 'epsg:4326'}
-    geo_banks.plot(ax=base, marker="o",
-                   mfc="yellow", markersize=5,
-                   markeredgecolor="black", alpha=0.5)
+    geometry_oc = [Point(xy) for xy in zip(oc_df.X, oc_df.Y)]
+    geometry_oil = [Point(xy) for xy in zip(oil_df.X, oil_df.Y)]
+    crs = {'init', 'epsg:4326'}
+    oc_map = gpd.GeoDataFrame(crs=crs, geometry=geometry_oc)
+    oil_map = gpd.GeoDataFrame(crs=crs, geometry=geometry_oil)
+    oc_map.plot(ax=ax, color='#ED1C24', marker='o', markersize=92, label="commune oc", legend=True)
+    oil_map.plot(ax=ax, color='#235789', marker='o', markersize=92, label="commune oil", legend=True)
+    ax.legend(fancybox=True, loc='lower center', scatterpoints=1, framealpha=1, shadow=True, borderpad=1,
+              ncol=2, fontsize=40)
+    ax.set_title("Cartographie de la France selon le critère de langue oc ou oil",
+                 fontsize=55)
+    ax.set_axis_off()
     plt.show()
 
 
