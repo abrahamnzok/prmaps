@@ -175,6 +175,17 @@ def get_dframe(geojsonfile):
 
 
 def geojson_reprojected(csvpath):
+    """Cette fonction lit un fichier csv qui contient les données spatiales en lat/long
+                 Parameters
+                 ----------
+                 csvpath: str
+                     Le chemin vers le fichier
+
+                 Returns
+                 -------
+                     DataFrame
+                         un object de type data frame
+                 """
     gdf = pd.read_csv(csvpath)
     return gdf
 
@@ -199,7 +210,7 @@ def draw_fr_map(dframe):
     oil_map.plot(ax=ax, color='#235789', marker='o', markersize=92, label="commune oil", legend=True)
     ax.legend(fancybox=True, loc='lower center', scatterpoints=1, framealpha=1, shadow=True, borderpad=1,
               ncol=2, fontsize=40)
-    ax.set_title("Cartographie de la France selon le critère de langue oc ou oil",
+    ax.set_title("Cartographie de la France selon le critère de langue oil et oc",
                  fontsize=55)
     ax.set_axis_off()
     plt.show()
@@ -222,11 +233,3 @@ def get_rules(jsonfile):
 
 df = get_dframe("communes.geojson")
 draw_fr_map(df)
-# print(df.nom)
-# rules = get_rules("prm2_rules.json")
-# crt_oc_oil_pts(geojson_reprojected('communes.csv'), rules, df.nom)
-# print(df.ix[0].head())
-# print(is_oil(ling_rl_value(rules.oc, rules.oil, "Villeneuve")))
-# print(ling_rl_value(rules.oc, rules.oil, "Villefort"))
-# print(ling_rl_value(rules.oc, rules.oil, "Rougemont"))
-# print(ling_rl_value(rules.oc, rules.oil, " Blanc-Mont"))
